@@ -1,0 +1,17 @@
+{
+  "name": "knowledge-hud",
+  "version": "1.0.0",
+  "description": "Global knowledge base HUD with hotkey access",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "import": "node import-library.js"
+  },
+  "keywords": ["knowledge", "hud", "productivity", "electron"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^40.8.0"
+  }
+}

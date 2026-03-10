@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Base Manager</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .entries-list {
+            margin-top: 20px;
+        }
+
+        .entry-item {
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .entry-item:hover {
+            background: #f8f9fa;
+        }
+
+        .entry-title {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .entry-meta {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .selected {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        .hud-status {
+            background: #27ae60;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .hud-status strong {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="hud-status">
+                <strong>🖥️ HUD Active</strong><br>
+                Press <kbd>Ctrl+Shift+0</kbd> anywhere to open
+            </div>
+
+            <h2>Add New Entry</h2>
+            <form id="entry-form">
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" id="title" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="type">Type</label>
+                    <select id="type">
+                        <option value="note">Note</option>
+                        <option value="code">Code</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="content">Content</label>
+                    <textarea id="content" required placeholder="Enter your knowledge here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="tags">Tags (comma separated)</label>
+                    <input type="text" id="tags" placeholder="linux, commands, filesystem">
+                </div>
+
+                <button type="submit">Add Entry</button>
+            </form>
+
+            <div class="entries-list">
+                <h3>Your Entries</h3>
+                <div id="entries-list"></div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <h1>Knowledge Base Manager</h1>
+            <p>This is your knowledge base management interface. The HUD overlay is accessible globally with <kbd>Ctrl+Shift+0</kbd>.</p>
+        <button id="test-hud-btn" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 20px;">Test HUD</button>
+                <p>Select an entry from the sidebar to view details and edit.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        const entryForm = document.getElementById('entry-form');
+        const entriesList = document.getElementById('entries-list');
+        const selectedEntryDiv = document.getElementById('selected-entry');
+
+        let allEntries = [];
+        let selectedEntryId = null;
+
+        // Load entries
+        async function loadEntries() {
+            try {
+                allEntries = await ipcRenderer.invoke('get-library');
+                displayEntriesList();
+            } catch (error) {
+                console.error('Error loading entries:', error);
+            }
+        }
+
+        // Display entries in sidebar
+        function displayEntriesList() {
+            entriesList.innerHTML = allEntries.map(entry => `
+                <div class="entry-item ${selectedEntryId === entry.id ? 'selected' : ''}" onclick="selectEntry(${entry.id})">
+                    <div class="entry-title">${entry.title}</div>
+                    <div class="entry-meta">${entry.type} • ${new Date(entry.created).toLocaleDateString()}</div>
+                </div>
+            `).join('');
+        }
+
+        // Select entry
+        function selectEntry(id) {
+            selectedEntryId = id;
+            displayEntriesList();
+            const entry = allEntries.find(e => e.id === id);
+            if (entry) {
+                selectedEntryDiv.innerHTML = `
+                    <h2>${entry.title}</h2>
+                    <div class="entry-meta">Type: ${entry.type} | Created: ${new Date(entry.created).toLocaleDateString()}</div>
+                    <div class="entry-content" style="margin-top: 20px;">
+                        ${entry.type === 'code' ? `<pre><code class="language-text">${entry.content}</code></pre>` : `<div class="markdown-content">${marked.parse(entry.content)}</div>`}
+                    </div>
+                    ${entry.tags && entry.tags.length > 0 ? `<div style="margin-top: 15px;"><strong>Tags:</strong> ${entry.tags.join(', ')}</div>` : ''}
+                    <div style="margin-top: 20px;">
+                        <button onclick="editEntry(${entry.id})">Edit</button>
+                        <button class="btn-secondary" onclick="deleteEntry(${entry.id})">Delete</button>
+                    </div>
+                `;
+                setTimeout(() => Prism.highlightAll(), 0);
+            }
+        }
+
+        // Add new entry
+        entryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('title').value.trim();
+            const type = document.getElementById('type').value;
+            const content = document.getElementById('content').value.trim();
+            const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t);
+
+            if (!title || !content) return;
+
+            try {
+                await ipcRenderer.invoke('add-entry', { title, type, content, tags });
+                entryForm.reset();
+                loadEntries();
+            } catch (error) {
+                console.error('Error adding entry:', error);
+            }
+        });
+
+        // Edit entry
+        async function editEntry(id) {
+            const entry = allEntries.find(e => e.id === id);
+            if (!entry) return;
+
+            document.getElementById('title').value = entry.title;
+            document.getElementById('type').value = entry.type;
+            document.getElementById('content').value = entry.content;
+            document.getElementById('tags').value = entry.tags ? entry.tags.join(', ') : '';
+
+            // Change form to update mode
+            const submitBtn = entryForm.querySelector('button[type="submit"]');
+            submitBtn.textContent = 'Update Entry';
+            submitBtn.onclick = async (e) => {
+                e.preventDefault();
+                const updates = {
+                    title: document.getElementById('title').value.trim(),
+                    type: document.getElementById('type').value,
+                    content: document.getElementById('content').value.trim(),
+                    tags: document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t)
+                };
+
+                try {
+                    await ipcRenderer.invoke('update-entry', id, updates);
+                    entryForm.reset();
+                    submitBtn.textContent = 'Add Entry';
+                    submitBtn.onclick = null;
+                    loadEntries();
+                    selectEntry(id);
+                } catch (error) {
+                    console.error('Error updating entry:', error);
+                }
+            };
+        }
+
+        // Delete entry
+        async function deleteEntry(id) {
+            if (!confirm('Are you sure you want to delete this entry?')) return;
+
+            try {
+                await ipcRenderer.invoke('delete-entry', id);
+                loadEntries();
+                selectedEntryDiv.innerHTML = '<p>Select an entry from the sidebar to view details.</p>';
+            } catch (error) {
+                console.error('Error deleting entry:', error);
+            }
+        }
+
+        // Load entries on startup
+        loadEntries();
+
+        // Test HUD button
+        document.getElementById('test-hud-btn').addEventListener('click', () => {
+            ipcRenderer.send('show-hud');
+        });
+    </script>
+</body>
+</html>
