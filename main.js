@@ -1,6 +1,12 @@
 const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
+const {
+    DEFAULT_DATA: DEFAULT_SHELL_SNIPPETS_DATA,
+    loadShellSnippetsData,
+    buildShellSnippetEntries,
+    buildShellSnippetExport
+} = require('./shell-snippets');
 
 let mainWindow;
 let hudWindow;
@@ -37,6 +43,48 @@ async function saveLibraryData() {
     }
 }
 
+async function getShellSnippetsData() {
+    try {
+        return await loadShellSnippetsData();
+    } catch (error) {
+        console.error('Error loading shell snippets:', error);
+
+        return {
+            ...DEFAULT_SHELL_SNIPPETS_DATA,
+            exportPolicy: { ...DEFAULT_SHELL_SNIPPETS_DATA.exportPolicy },
+            categoryOrder: [...DEFAULT_SHELL_SNIPPETS_DATA.categoryOrder],
+            safetyRules: [...DEFAULT_SHELL_SNIPPETS_DATA.safetyRules],
+            snippets: []
+        };
+    }
+}
+
+function matchesKnowledgeQuery(entry, query) {
+    const searchFields = [
+        entry.title,
+        entry.content,
+        entry.code,
+        entry.category,
+        entry.platform,
+        entry.riskLevel,
+        entry.notes,
+        ...(entry.tags || [])
+    ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+    return searchFields.includes(query);
+}
+
+async function getHudEntries() {
+    const shellSnippetsData = await getShellSnippetsData();
+    return [
+        ...libraryData,
+        ...buildShellSnippetEntries(shellSnippetsData)
+    ];
+}
+
 function createMainWindow() {
     mainWindow = new BrowserWindow({
         width: 1200,
@@ -59,7 +107,7 @@ function createHUDWindow() {
     hudWindow = new BrowserWindow({
         width: 1000,
         height: 600,
-        show: false,
+        show: false, // Hide by default, show on hotkey
         frame: false,
         alwaysOnTop: true,
         transparent: true,
@@ -97,11 +145,14 @@ function createTray() {
 }
 
 function toggleHUD() {
+    console.log('Toggle HUD called. Current visibility:', hudWindow.isVisible());
     if (hudWindow.isVisible()) {
         hudWindow.hide();
+        console.log('HUD hidden');
     } else {
         hudWindow.show();
         hudWindow.focus();
+        console.log('HUD shown and focused');
     }
 }
 
@@ -110,21 +161,63 @@ app.whenReady().then(async () => {
     createMainWindow();
     createHUDWindow();
 
-    // Try to register global shortcut with error handling
-    const success = globalShortcut.register('CommandOrControl+Shift+0', toggleHUD);
+    // Try multiple global shortcuts for Linux compatibility
+    const shortcuts = [
+        'CommandOrControl+Shift+0',
+        'CommandOrControl+Shift+9',
+        'CommandOrControl+Alt+0',
+        'CommandOrControl+Alt+9',
+        'F12',
+        'F11'
+    ];
 
-    if (success) {
-        console.log('Global shortcut Ctrl+Shift+0 registered successfully');
-    } else {
-        console.error('Failed to register global shortcut Ctrl+Shift+0');
-        // Try alternative hotkey
-        const altSuccess = globalShortcut.register('CommandOrControl+Shift+9', toggleHUD);
-        if (altSuccess) {
-            console.log('Alternative shortcut Ctrl+Shift+9 registered');
+    let globalShortcutRegistered = false;
+    for (const shortcut of shortcuts) {
+        if (globalShortcut.register(shortcut, toggleHUD)) {
+            console.log(`✅ Global shortcut ${shortcut} registered successfully`);
+            globalShortcutRegistered = true;
+            break;
         } else {
-            console.error('Failed to register any global shortcuts');
+            console.log(`❌ Failed to register global shortcut ${shortcut}`);
         }
     }
+
+    if (!globalShortcutRegistered) {
+        console.log('ℹ️  Global shortcuts not available on this Linux setup - use local shortcuts or button instead');
+    }
+
+    // Add local shortcuts to main window
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+        if (input.control && input.shift && input.key === '0') {
+            event.preventDefault();
+            toggleHUD();
+            console.log('Local shortcut Ctrl+Shift+0 triggered');
+        }
+        if (input.control && input.shift && input.key === '9') {
+            event.preventDefault();
+            toggleHUD();
+            console.log('Local shortcut Ctrl+Shift+9 triggered');
+        }
+        if (input.key === 'F12') {
+            event.preventDefault();
+            toggleHUD();
+            console.log('Local shortcut F12 triggered');
+        }
+    });
+
+    // Add local shortcuts to HUD window
+    hudWindow.webContents.on('before-input-event', (event, input) => {
+        if (input.control && input.shift && input.key === '0') {
+            event.preventDefault();
+            toggleHUD();
+            console.log('HUD local shortcut Ctrl+Shift+0 triggered');
+        }
+        if (input.key === 'Escape') {
+            event.preventDefault();
+            hudWindow.hide();
+            console.log('HUD hidden via Escape');
+        }
+    });
 
     // Log all registered shortcuts
     console.log('Registered shortcuts:', globalShortcut.isRegistered('CommandOrControl+Shift+0'));
@@ -133,11 +226,22 @@ app.whenReady().then(async () => {
     ipcMain.handle('get-library', () => libraryData);
     ipcMain.handle('search-library', (event, query) => {
         const q = query.toLowerCase();
-        return libraryData.filter(entry =>
-            entry.title.toLowerCase().includes(q) ||
-            entry.content.toLowerCase().includes(q) ||
-            (entry.tags && entry.tags.some(tag => tag.toLowerCase().includes(q)))
-        );
+        return libraryData.filter(entry => matchesKnowledgeQuery(entry, q));
+    });
+    ipcMain.handle('get-hud-entries', async () => {
+        return getHudEntries();
+    });
+    ipcMain.handle('search-hud-entries', async (event, query) => {
+        const q = query.toLowerCase();
+        const hudEntries = await getHudEntries();
+        return hudEntries.filter(entry => matchesKnowledgeQuery(entry, q));
+    });
+    ipcMain.handle('get-shell-snippets', async () => {
+        return getShellSnippetsData();
+    });
+    ipcMain.handle('get-shell-snippet-export', async () => {
+        const shellSnippetsData = await getShellSnippetsData();
+        return buildShellSnippetExport(shellSnippetsData);
     });
     ipcMain.handle('add-entry', async (event, entry) => {
         const newEntry = {

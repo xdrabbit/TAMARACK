@@ -3,136 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge HUD</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+    <title>TAMARACK HUD</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
+        :root {
+            color-scheme: dark;
+            --bg: rgba(0, 0, 0, 0.92);
+            --panel: rgba(6, 12, 20, 0.86);
+            --border: rgba(0, 255, 170, 0.25);
+            --text: #defff4;
+            --muted: rgba(194, 255, 235, 0.7);
+            --accent: #55f2c0;
+            --warning: #ffbf69;
+            --danger: #ff7f7f;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             padding: 20px;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            background: rgba(0, 0, 0, 0.95);
-            color: #00ff00;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            border: 1px solid #00ff00;
-        }
-
-        .hud-container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .search-container {
-            margin-bottom: 20px;
-        }
-
-        #search-input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #00ff00;
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.8);
-            color: #00ff00;
-            font-size: 16px;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            outline: none;
-        }
-
-        #search-input::placeholder {
-            color: rgba(0, 255, 0, 0.6);
-        }
-
-        #search-input:focus {
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-            border-color: #00aa00;
-        }
-
-        .results-container {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .entry {
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            border: 1px solid #00aa00;
-            box-shadow: 0 0 5px rgba(0, 255, 0, 0.2);
-        }
-
-        .entry-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .entry-title {
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .entry-meta {
-            font-size: 12px;
-            color: rgba(0, 255, 0, 0.7);
-        }
-
-        .entry-content {
-            line-height: 1.6;
-            color: #00ff00;
-        }
-
-        .entry-content h1,
-        .entry-content h2,
-        .entry-content h3 {
-            margin-top: 15px;
-            margin-bottom: 8px;
-            color: #00ff00;
-        }
-
-        .entry-content code {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            color: #00aa00;
-        }
-
-        .entry-content pre {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-            overflow-x: auto;
-            border: 1px solid #00aa00;
-        }
-
-        .entry-content pre code {
-            background: none;
-            padding: 0;
-            color: #00ff00;
-        }
-
-        .entry-tags {
-            margin-top: 10px;
-            font-size: 12px;
-            color: rgba(0, 255, 0, 0.7);
-        }
-
-        .no-results {
-            text-align: center;
-            padding: 40px;
-            color: rgba(0, 255, 0, 0.6);
+            font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+            background: var(--bg);
+            color: var(--text);
+            border-radius: 18px;
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            box-shadow: 0 22px 60px rgba(0, 0, 0, 0.45);
         }
 
         .close-hint {
             position: absolute;
             top: 10px;
-            right: 15px;
+            right: 16px;
             font-size: 12px;
-            color: rgba(0, 255, 0, 0.5);
+            color: rgba(194, 255, 235, 0.6);
+        }
+
+        .hud-container {
+            max-width: 920px;
+            margin: 0 auto;
+        }
+
+        .search-container {
+            margin-bottom: 18px;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: rgba(3, 8, 14, 0.95);
+            color: var(--text);
+            border: 1px solid rgba(0, 255, 170, 0.28);
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        #search-input::placeholder {
+            color: rgba(194, 255, 235, 0.54);
+        }
+
+        #search-input:focus {
+            box-shadow: 0 0 0 4px rgba(85, 242, 192, 0.12);
+        }
+
+        .results-container {
+            max-height: 420px;
+            overflow-y: auto;
+            display: grid;
+            gap: 12px;
+        }
+
+        .entry {
+            background: var(--panel);
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid rgba(0, 255, 170, 0.16);
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .entry-title {
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+
+        .entry-meta {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .entry-content {
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        .entry-content code {
+            font-family: inherit;
+        }
+
+        .entry-content pre {
+            background: rgba(2, 8, 12, 0.98);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 170, 0.14);
+            padding: 14px;
+            overflow-x: auto;
+        }
+
+        .entry-tags,
+        .entry-badges {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 5px 9px;
+            font-size: 11px;
+            border: 1px solid rgba(0, 255, 170, 0.2);
+            color: var(--text);
+            background: rgba(8, 18, 24, 0.92);
+        }
+
+        .risk-safe {
+            color: var(--accent);
+        }
+
+        .risk-caution {
+            color: var(--warning);
+        }
+
+        .risk-dangerous {
+            color: var(--danger);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: rgba(194, 255, 235, 0.65);
         }
     </style>
 </head>
@@ -140,10 +165,10 @@
     <div class="close-hint">Click outside or press Esc to close</div>
     <div class="hud-container">
         <div class="search-container">
-            <input type="text" id="search-input" placeholder="Search your knowledge base..." autocomplete="off">
+            <input type="text" id="search-input" placeholder="Search notes and shell snippets..." autocomplete="off">
         </div>
         <div class="results-container" id="results-container">
-            <div class="no-results">Start typing to search your knowledge...</div>
+            <div class="no-results">Start typing to search notes, aliases, and terminal references.</div>
         </div>
     </div>
 
@@ -154,64 +179,113 @@
 
         let allEntries = [];
 
-        // Load all entries on startup
+        marked.setOptions({ breaks: true });
+
+        function escapeHtml(value = '') {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatDate(value) {
+            if (!value) {
+                return 'Unknown date';
+            }
+
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) {
+                return value;
+            }
+
+            return date.toLocaleDateString();
+        }
+
         async function loadEntries() {
             try {
-                allEntries = await ipcRenderer.invoke('get-library');
-                displayResults(allEntries.slice(0, 10)); // Show first 10
+                allEntries = await ipcRenderer.invoke('get-hud-entries');
+                displayResults(allEntries.slice(0, 12));
             } catch (error) {
-                console.error('Error loading entries:', error);
+                console.error('Error loading HUD entries:', error);
+                resultsContainer.innerHTML = '<div class="no-results">HUD entries could not be loaded.</div>';
             }
         }
 
-        // Search functionality
-        searchInput.addEventListener('input', async (e) => {
-            const query = e.target.value.trim();
+        searchInput.addEventListener('input', async (event) => {
+            const query = event.target.value.trim();
+
             if (query.length === 0) {
-                displayResults(allEntries.slice(0, 10));
+                displayResults(allEntries.slice(0, 12));
                 return;
             }
 
             try {
-                const results = await ipcRenderer.invoke('search-library', query);
+                const results = await ipcRenderer.invoke('search-hud-entries', query);
                 displayResults(results);
             } catch (error) {
                 console.error('Search error:', error);
             }
         });
 
-        // Display results
+        function renderEntryContent(entry) {
+            if (entry.type === 'shell-snippet') {
+                return `
+                    <div>${escapeHtml(entry.content || '')}</div>
+                    <pre><code class="language-bash">${escapeHtml(entry.code || '')}</code></pre>
+                    ${entry.notes ? `<div>${escapeHtml(entry.notes)}</div>` : ''}
+                `;
+            }
+
+            if (entry.type === 'code') {
+                return `<pre><code class="language-bash">${escapeHtml(entry.content || '')}</code></pre>`;
+            }
+
+            return `<div>${marked.parse(entry.content || '')}</div>`;
+        }
+
         function displayResults(entries) {
             if (entries.length === 0) {
                 resultsContainer.innerHTML = '<div class="no-results">No matching entries found</div>';
                 return;
             }
 
-            resultsContainer.innerHTML = entries.map(entry => `
+            resultsContainer.innerHTML = entries.map((entry) => `
                 <div class="entry">
                     <div class="entry-header">
-                        <div class="entry-title">${entry.title}</div>
-                        <div class="entry-meta">${entry.type} • ${new Date(entry.created).toLocaleDateString()}</div>
+                        <div>
+                            <div class="entry-title">${escapeHtml(entry.title)}</div>
+                            <div class="entry-meta">${escapeHtml(entry.type)} • ${escapeHtml(formatDate(entry.created))}</div>
+                        </div>
+                        ${entry.category ? `<div class="badge">${escapeHtml(entry.category)}</div>` : ''}
                     </div>
                     <div class="entry-content">
-                        ${entry.type === 'code' ? `<pre><code class="language-text">${entry.content}</code></pre>` : `<div class="markdown-content">${marked.parse(entry.content)}</div>`}
+                        ${renderEntryContent(entry)}
                     </div>
-                    ${entry.tags && entry.tags.length > 0 ? `<div class="entry-tags">Tags: ${entry.tags.join(', ')}</div>` : ''}
+                    ${(entry.riskLevel || entry.platform) ? `
+                        <div class="entry-badges">
+                            ${entry.riskLevel ? `<span class="badge risk-${escapeHtml(entry.riskLevel)}">${escapeHtml(entry.riskLevel)}</span>` : ''}
+                            ${entry.platform ? `<span class="badge">${escapeHtml(entry.platform)}</span>` : ''}
+                        </div>
+                    ` : ''}
+                    ${entry.tags && entry.tags.length > 0 ? `
+                        <div class="entry-tags">
+                            ${entry.tags.map((tag) => `<span class="badge">${escapeHtml(tag)}</span>`).join('')}
+                        </div>
+                    ` : ''}
                 </div>
             `).join('');
 
-            // Highlight code blocks
-            setTimeout(() => Prism.highlightAll(), 0);
+            Prism.highlightAll();
         }
 
-        // Handle escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
                 ipcRenderer.send('hide-hud');
             }
         });
 
-        // Load entries when ready
         loadEntries();
     </script>
 </body>

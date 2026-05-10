@@ -1,0 +1,492 @@
+{
+  "title": "TAMARACK Safe Shell Snippets",
+  "description": "Reference-only shell helpers for local review, copying, and optional export into ~/.zshrc.",
+  "updatedAt": "2026-05-09",
+  "categoryOrder": [
+    "ls shortcuts",
+    "git shortcuts",
+    "ssh shortcuts",
+    "npm/node helpers",
+    "config editing helpers",
+    "safe functions"
+  ],
+  "exportPolicy": {
+    "omitRiskLevels": [
+      "dangerous"
+    ],
+    "header": [
+      "# ---- TAMARACK managed shell helpers ----",
+      "# Review before use. Generated from TAMARACK knowledge base.",
+      "# Dangerous snippets remain reference-only and are omitted from this export."
+    ]
+  },
+  "safetyRules": [
+    "Do not paste large blocks directly into a live terminal session.",
+    "Edit ~/.zshrc intentionally with nano ~/.zshrc or another editor you trust.",
+    "Review every alias and function before installing it.",
+    "Avoid overriding destructive commands unless the snippet is clearly marked and justified.",
+    "Aliases that wrap rm or other destructive commands should be treated as caution or dangerous.",
+    "Snippets stay reference material until you explicitly copy them into ~/.zshrc yourself."
+  ],
+  "snippets": [
+    {
+      "id": "ls-ll",
+      "title": "Long listing",
+      "category": "ls shortcuts",
+      "description": "Show a human-readable long listing for the current directory.",
+      "code": "alias ll='ls -lh'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "ls",
+        "filesystem",
+        "listing"
+      ],
+      "notes": "Good default when you want file sizes without hidden files.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "ls-la",
+      "title": "Show hidden files",
+      "category": "ls shortcuts",
+      "description": "List all files, including dotfiles, in long format.",
+      "code": "alias la='ls -la'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "ls",
+        "dotfiles",
+        "listing"
+      ],
+      "notes": "Useful when inspecting project config and hidden files.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "ls-lsa",
+      "title": "All files with sizes",
+      "category": "ls shortcuts",
+      "description": "List all files in long format with human-readable sizes.",
+      "code": "alias lsa='ls -lah'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "ls",
+        "dotfiles",
+        "sizes"
+      ],
+      "notes": "Pairs hidden-file visibility with readable file sizes.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "ls-lt",
+      "title": "Oldest-first detailed view",
+      "category": "ls shortcuts",
+      "description": "List files with details, hidden entries, and oldest items near the top.",
+      "code": "alias lt='ls -lahtr'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "ls",
+        "sorting",
+        "timestamps"
+      ],
+      "notes": "Useful when you want to see the newest files accumulate at the bottom.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "ls-ltr",
+      "title": "Newest-first detailed view",
+      "category": "ls shortcuts",
+      "description": "List files with details and put recent entries near the top.",
+      "code": "alias ltr='ls -laht'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "ls",
+        "sorting",
+        "timestamps"
+      ],
+      "notes": "Helpful for quickly spotting the most recently changed files.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "git-gs",
+      "title": "Git status",
+      "category": "git shortcuts",
+      "description": "Show the current repository status.",
+      "code": "alias gs='git status'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "git",
+        "status",
+        "repo"
+      ],
+      "notes": "Safe read-only shortcut for checking branch and file state.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "git-ga",
+      "title": "Git add",
+      "category": "git shortcuts",
+      "description": "Stage files intentionally with git add.",
+      "code": "alias ga='git add'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "git",
+        "staging",
+        "repo"
+      ],
+      "notes": "Keeps the original git add behavior but shorter to type.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "git-gaa",
+      "title": "Stage everything",
+      "category": "git shortcuts",
+      "description": "Stage tracked and untracked changes across the repository.",
+      "code": "alias gaa='git add -A'",
+      "riskLevel": "caution",
+      "platform": "both",
+      "tags": [
+        "git",
+        "staging",
+        "bulk"
+      ],
+      "notes": "Review git status first so you do not stage unrelated work by accident.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "git-gc",
+      "title": "Git commit",
+      "category": "git shortcuts",
+      "description": "Run git commit with the normal interactive message flow.",
+      "code": "alias gc='git commit'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "git",
+        "commit",
+        "history"
+      ],
+      "notes": "Convenient shorthand when you want the full commit experience.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "git-gcm",
+      "title": "Git commit with message",
+      "category": "git shortcuts",
+      "description": "Commit with an inline message flag ready to fill.",
+      "code": "alias gcm='git commit -m'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "git",
+        "commit",
+        "messages"
+      ],
+      "notes": "Still review the staged diff before using a one-line commit shortcut.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "git-gp",
+      "title": "Git push",
+      "category": "git shortcuts",
+      "description": "Push the current branch to its configured remote.",
+      "code": "alias gp='git push'",
+      "riskLevel": "caution",
+      "platform": "both",
+      "tags": [
+        "git",
+        "remote",
+        "push"
+      ],
+      "notes": "Pushing affects a shared remote, so make sure the branch and remote are right.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "git-gl",
+      "title": "Compact decorated log",
+      "category": "git shortcuts",
+      "description": "Show a short graph view of the latest commits across branches.",
+      "code": "alias gl='git log --oneline --graph --decorate --all -20'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "git",
+        "history",
+        "graph"
+      ],
+      "notes": "Read-only shortcut for a quick branch history snapshot.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "git-gd",
+      "title": "Git diff",
+      "category": "git shortcuts",
+      "description": "Show unstaged changes in the current repository.",
+      "code": "alias gd='git diff'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "git",
+        "diff",
+        "review"
+      ],
+      "notes": "Useful before staging or committing so you know exactly what changed.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "git-gco",
+      "title": "Git checkout",
+      "category": "git shortcuts",
+      "description": "Use git checkout with the original broad behavior.",
+      "code": "alias gco='git checkout'",
+      "riskLevel": "caution",
+      "platform": "both",
+      "tags": [
+        "git",
+        "branching",
+        "checkout"
+      ],
+      "notes": "Checkout can switch branches or restore paths, so confirm what arguments you pass.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "git-gb",
+      "title": "Git branch",
+      "category": "git shortcuts",
+      "description": "List or manage branches with a shorter command.",
+      "code": "alias gb='git branch'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "git",
+        "branching",
+        "repo"
+      ],
+      "notes": "Mostly read-only in day-to-day use unless you pass delete or rename flags.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "ssh-bird",
+      "title": "SSH to Blackbird",
+      "category": "ssh shortcuts",
+      "description": "Use the saved blackbird SSH host alias with a short command.",
+      "code": "alias bird='ssh blackbird'",
+      "riskLevel": "caution",
+      "platform": "both",
+      "tags": [
+        "ssh",
+        "remote",
+        "blackbird"
+      ],
+      "notes": "Requires a matching Host blackbird entry in ~/.ssh/config before it will work.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "ssh-bb",
+      "title": "Short SSH to Blackbird",
+      "category": "ssh shortcuts",
+      "description": "Even shorter alias for the same blackbird SSH host entry.",
+      "code": "alias bb='ssh blackbird'",
+      "riskLevel": "caution",
+      "platform": "both",
+      "tags": [
+        "ssh",
+        "remote",
+        "blackbird"
+      ],
+      "notes": "Keep the alias only if blackbird is a stable host name in your SSH config.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "node-py",
+      "title": "Python 3 shortcut",
+      "category": "npm/node helpers",
+      "description": "Prefer python3 explicitly with a short alias.",
+      "code": "alias py='python3'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "python",
+        "runtime",
+        "shortcut"
+      ],
+      "notes": "Useful on systems where plain python is absent or points somewhere unexpected.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "node-serve",
+      "title": "Serve current directory",
+      "category": "npm/node helpers",
+      "description": "Start a simple Python static file server on port 8000.",
+      "code": "alias serve='python3 -m http.server 8000'",
+      "riskLevel": "caution",
+      "platform": "both",
+      "tags": [
+        "python",
+        "server",
+        "local-dev"
+      ],
+      "notes": "This exposes the current directory over HTTP. Prefer a localhost-only bind if you only need private local access.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "node-ni",
+      "title": "npm install",
+      "category": "npm/node helpers",
+      "description": "Shorthand for npm install.",
+      "code": "alias ni='npm install'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "npm",
+        "dependencies",
+        "node"
+      ],
+      "notes": "Useful for projects that stick with npm rather than pnpm or yarn.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "node-nr",
+      "title": "npm run",
+      "category": "npm/node helpers",
+      "description": "Shorter prefix for package scripts.",
+      "code": "alias nr='npm run'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "npm",
+        "scripts",
+        "node"
+      ],
+      "notes": "Pairs well with scripts like dev, build, and test that follow next.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "node-dev",
+      "title": "npm run dev",
+      "category": "npm/node helpers",
+      "description": "Run the local development script with one word.",
+      "code": "alias dev='npm run dev'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "npm",
+        "dev",
+        "node"
+      ],
+      "notes": "Only keep this if dev is a common package script across your active projects.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "node-build",
+      "title": "npm run build",
+      "category": "npm/node helpers",
+      "description": "Run the package build script quickly.",
+      "code": "alias build='npm run build'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "npm",
+        "build",
+        "node"
+      ],
+      "notes": "Convenient when a project consistently uses npm run build.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "node-test",
+      "title": "npm test",
+      "category": "npm/node helpers",
+      "description": "Run the package test script with a short alias.",
+      "code": "alias test='npm test'",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "npm",
+        "test",
+        "node"
+      ],
+      "notes": "A short alias is handy, but remember some repos use test for watch or integration jobs.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "config-zshconfig",
+      "title": "Edit zsh config",
+      "category": "config editing helpers",
+      "description": "Open your zsh config directly in nano.",
+      "code": "alias zshconfig='nano ~/.zshrc'",
+      "riskLevel": "caution",
+      "platform": "both",
+      "tags": [
+        "zsh",
+        "config",
+        "editor"
+      ],
+      "notes": "Safe enough for intentional edits, but changes to ~/.zshrc can affect every future shell.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "config-reload",
+      "title": "Reload zsh config",
+      "category": "config editing helpers",
+      "description": "Reload the current shell configuration without opening a new terminal.",
+      "code": "alias reload='source ~/.zshrc'",
+      "riskLevel": "caution",
+      "platform": "both",
+      "tags": [
+        "zsh",
+        "config",
+        "reload"
+      ],
+      "notes": "Run zsh -n ~/.zshrc first if you changed functions or blocks and want a safer syntax check.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    },
+    {
+      "id": "fn-mkcd",
+      "title": "Make and enter directory",
+      "category": "safe functions",
+      "description": "Create a directory path if needed and enter it immediately.",
+      "code": "mkcd() {\n  mkdir -p \"$1\" && cd \"$1\"\n}",
+      "riskLevel": "safe",
+      "platform": "both",
+      "tags": [
+        "function",
+        "navigation",
+        "filesystem"
+      ],
+      "notes": "Keep this as a function rather than an alias so it can change the current shell directory.",
+      "createdAt": "2026-05-09",
+      "updatedAt": "2026-05-09"
+    }
+  ]
+}

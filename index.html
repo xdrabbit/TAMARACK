@@ -3,316 +3,1146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knowledge Base Manager</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+    <title>TAMARACK Knowledge Base</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
+        :root {
+            color-scheme: dark;
+            --bg: #040912;
+            --bg-glow: #0c1a2c;
+            --panel: rgba(7, 14, 24, 0.92);
+            --panel-strong: rgba(5, 10, 18, 0.98);
+            --panel-soft: rgba(12, 20, 32, 0.84);
+            --border: rgba(124, 198, 255, 0.18);
+            --border-strong: rgba(124, 198, 255, 0.38);
+            --text: #edf5ff;
+            --muted: #9db0ca;
+            --accent: #57b9ff;
+            --accent-strong: #6de7ff;
+            --success: #7ce3a8;
+            --warning: #ffc15a;
+            --danger: #ff7f7f;
+            --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
-            padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            color: #333;
+            min-height: 100vh;
+            padding: 24px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at top, rgba(40, 83, 140, 0.35), transparent 35%),
+                linear-gradient(180deg, #0b1524 0%, #040912 44%, #02060b 100%);
+            color: var(--text);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.22;
+        }
+
+        button,
+        input,
+        textarea,
+        select {
+            font: inherit;
+        }
+
+        button {
+            border: 1px solid transparent;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), #2d74ff);
+            color: white;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: transform 0.16s ease, border-color 0.16s ease, opacity 0.16s ease, background 0.16s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.65;
+            cursor: default;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(15, 26, 42, 0.9);
+            border-color: rgba(124, 198, 255, 0.24);
+            color: var(--text);
         }
 
         .container {
-            max-width: 1200px;
+            position: relative;
+            z-index: 1;
+            max-width: 1500px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: 400px 1fr;
-            gap: 20px;
-            height: calc(100vh - 40px);
+            grid-template-columns: 360px minmax(0, 1fr);
+            gap: 24px;
+            min-height: calc(100vh - 48px);
+        }
+
+        .sidebar,
+        .main-content {
+            background: linear-gradient(180deg, rgba(11, 19, 31, 0.96), rgba(4, 8, 14, 0.98));
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(20px);
         }
 
         .sidebar {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            padding: 18px;
         }
 
         .main-content {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 24px;
             overflow-y: auto;
         }
 
-        h1 {
+        .panel {
+            background: linear-gradient(180deg, rgba(12, 21, 34, 0.9), rgba(7, 12, 20, 0.96));
+            border: 1px solid rgba(124, 198, 255, 0.14);
+            border-radius: 18px;
+            padding: 18px;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        p {
             margin-top: 0;
-            color: #2c3e50;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+            font-size: clamp(2rem, 3vw, 2.8rem);
+        }
+
+        h2,
+        h3 {
+            margin-bottom: 10px;
+        }
+
+        .eyebrow {
+            margin-bottom: 10px;
+            color: var(--accent-strong);
+            letter-spacing: 0.12em;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .hero-text,
+        .section-copy,
+        .hud-status p,
+        .empty-copy,
+        .snippet-description,
+        .snippet-notes,
+        .rule-list,
+        .summary-copy {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .hud-status {
+            background:
+                radial-gradient(circle at top right, rgba(109, 231, 255, 0.14), transparent 30%),
+                linear-gradient(180deg, rgba(16, 29, 47, 0.94), rgba(6, 11, 19, 0.98));
+        }
+
+        .hud-status h2 {
+            margin-bottom: 8px;
+        }
+
+        .status-shortcuts {
+            display: grid;
+            gap: 8px;
+            margin: 16px 0;
+            color: var(--muted);
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .section-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .section-heading-spacious {
+            margin-bottom: 20px;
+        }
+
+        .count-pill,
+        .badge,
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 12px;
+            line-height: 1;
+            border: 1px solid rgba(124, 198, 255, 0.22);
+            background: rgba(14, 23, 36, 0.88);
+            color: var(--text);
+        }
+
+        .count-pill {
+            min-width: 44px;
+            justify-content: center;
+        }
+
+        .tag {
+            color: var(--muted);
+        }
+
+        .badge-risk-safe {
+            border-color: rgba(124, 227, 168, 0.32);
+            color: var(--success);
+        }
+
+        .badge-risk-caution {
+            border-color: rgba(255, 193, 90, 0.34);
+            color: var(--warning);
+        }
+
+        .badge-risk-dangerous {
+            border-color: rgba(255, 127, 127, 0.36);
+            color: var(--danger);
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 14px;
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #d9e7fa;
         }
 
-        input, textarea, select {
+        input,
+        textarea,
+        select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-family: inherit;
+            background: rgba(3, 8, 14, 0.94);
+            color: var(--text);
+            border: 1px solid rgba(124, 198, 255, 0.18);
+            border-radius: 12px;
+            padding: 12px 14px;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: rgba(157, 176, 202, 0.7);
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(87, 185, 255, 0.14);
         }
 
         textarea {
+            min-height: 120px;
             resize: vertical;
-            min-height: 100px;
-        }
-
-        button {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        button:hover {
-            background: #2980b9;
-        }
-
-        .btn-secondary {
-            background: #95a5a6;
-        }
-
-        .btn-secondary:hover {
-            background: #7f8c8d;
         }
 
         .entries-list {
-            margin-top: 20px;
+            display: grid;
+            gap: 10px;
         }
 
         .entry-item {
-            padding: 15px;
-            border: 1px solid #eee;
-            border-radius: 5px;
-            margin-bottom: 10px;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(124, 198, 255, 0.12);
+            background: rgba(6, 11, 18, 0.9);
             cursor: pointer;
-            transition: background 0.2s;
+            transition: border-color 0.16s ease, transform 0.16s ease, background 0.16s ease;
         }
 
         .entry-item:hover {
-            background: #f8f9fa;
+            border-color: rgba(124, 198, 255, 0.32);
+            transform: translateY(-1px);
+        }
+
+        .entry-item.selected {
+            background: rgba(10, 24, 42, 0.95);
+            border-color: rgba(87, 185, 255, 0.38);
+            box-shadow: inset 0 0 0 1px rgba(87, 185, 255, 0.18);
         }
 
         .entry-title {
-            font-weight: 500;
-            margin-bottom: 5px;
+            font-weight: 600;
+            margin-bottom: 6px;
         }
 
-        .entry-meta {
-            font-size: 12px;
-            color: #666;
+        .entry-meta,
+        .detail-meta,
+        .snippet-metadata,
+        .snippet-updated {
+            color: var(--muted);
+            font-size: 13px;
         }
 
-        .selected {
-            background: #e3f2fd;
-            border-color: #2196f3;
+        .main-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
-        .hud-status {
-            background: #27ae60;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+        .view-tabs {
+            display: inline-flex;
+            gap: 8px;
+            background: rgba(8, 13, 22, 0.88);
+            border: 1px solid rgba(124, 198, 255, 0.16);
+            border-radius: 999px;
+            padding: 6px;
+        }
+
+        .view-tab {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--muted);
+            min-width: 160px;
+        }
+
+        .view-tab.active {
+            background: linear-gradient(135deg, rgba(87, 185, 255, 0.22), rgba(45, 116, 255, 0.34));
+            border-color: rgba(124, 198, 255, 0.24);
+            color: var(--text);
+        }
+
+        .panel-view {
+            display: none;
+        }
+
+        .panel-view.active {
+            display: block;
+        }
+
+        .detail-card,
+        .summary-card,
+        .snippet-card,
+        .export-card,
+        .safety-card,
+        .filter-card {
+            background: linear-gradient(180deg, rgba(12, 21, 34, 0.88), rgba(5, 10, 18, 0.96));
+            border: 1px solid rgba(124, 198, 255, 0.14);
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .detail-card.empty-state,
+        .snippet-empty {
+            border-style: dashed;
+            color: var(--muted);
+        }
+
+        .detail-actions {
+            margin-top: 18px;
+        }
+
+        .detail-content {
+            margin-top: 18px;
+            line-height: 1.7;
+        }
+
+        .detail-content code,
+        .snippet-card code,
+        .export-card code {
+            font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+        }
+
+        .detail-content pre,
+        .snippet-card pre,
+        .export-card pre {
+            margin: 14px 0 0;
+            background: rgba(2, 7, 13, 0.98);
+            border: 1px solid rgba(124, 198, 255, 0.12);
+            border-radius: 16px;
+            overflow-x: auto;
+            padding: 16px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .summary-card strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 28px;
+        }
+
+        .shell-tools {
+            display: grid;
+            grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.9fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .shell-column {
+            display: grid;
+            gap: 18px;
+        }
+
+        .rule-list {
+            margin: 0;
+            padding-left: 18px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .snippet-groups {
+            display: grid;
+            gap: 18px;
+        }
+
+        .snippet-group {
+            display: grid;
+            gap: 14px;
+        }
+
+        .snippet-group-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 14px;
+        }
+
+        .snippet-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .snippet-card h4 {
+            margin-bottom: 8px;
+        }
+
+        .snippet-badges,
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .snippet-badges {
+            margin-bottom: 14px;
+        }
+
+        .snippet-footer {
+            margin-top: 14px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .export-card {
+            position: sticky;
+            top: 12px;
+        }
+
+        .export-card pre {
+            max-height: 620px;
+        }
+
+        .empty-library,
+        .snippet-empty {
+            padding: 16px;
             text-align: center;
         }
 
-        .hud-status strong {
-            font-size: 16px;
+        kbd {
+            border-radius: 6px;
+            border: 1px solid rgba(124, 198, 255, 0.26);
+            background: rgba(8, 13, 22, 0.92);
+            padding: 3px 8px;
+            font-size: 12px;
+            color: #f8fbff;
+        }
+
+        @media (max-width: 1280px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .shell-tools,
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .export-card {
+                position: static;
+            }
+        }
+
+        @media (max-width: 860px) {
+            body {
+                padding: 16px;
+            }
+
+            .main-toolbar,
+            .section-heading,
+            .snippet-card-header {
+                flex-direction: column;
+            }
+
+            .view-tabs {
+                width: 100%;
+            }
+
+            .view-tab {
+                flex: 1;
+                min-width: 0;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="sidebar">
-            <div class="hud-status">
-                <strong>🖥️ HUD Active</strong><br>
-                Press <kbd>Ctrl+Shift+0</kbd> anywhere to open
+        <aside class="sidebar">
+            <section class="panel hud-status">
+                <p class="eyebrow">HUD</p>
+                <h2>Mission Control Ready</h2>
+                <p>Saved notes and shell helpers stay local. Nothing in TAMARACK writes to your live shell config unless you copy it there yourself.</p>
+                <div class="status-shortcuts">
+                    <div><strong>Working:</strong> <kbd>F12</kbd> or the button below</div>
+                    <div><strong>Limited:</strong> <kbd>Ctrl+Shift+0</kbd> on some Linux setups</div>
+                </div>
+                <div class="button-row">
+                    <button id="show-hud-btn" type="button">Show HUD</button>
+                    <button id="show-shell-btn" class="btn-secondary" type="button">Shell Snippets</button>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Knowledge</p>
+                        <h2>Add New Entry</h2>
+                    </div>
+                </div>
+                <form id="entry-form">
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="type">Type</label>
+                        <select id="type">
+                            <option value="note">Note</option>
+                            <option value="code">Code</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="content">Content</label>
+                        <textarea id="content" required placeholder="Enter notes, commands, or operational context"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tags">Tags (comma separated)</label>
+                        <input type="text" id="tags" placeholder="ops, shell, blackbird">
+                    </div>
+
+                    <div class="button-row">
+                        <button id="entry-submit-btn" type="submit">Add Entry</button>
+                        <button id="cancel-edit-btn" class="btn-secondary" type="button" hidden>Cancel Edit</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Library</p>
+                        <h3>Your Entries</h3>
+                    </div>
+                    <span id="entry-count" class="count-pill">0</span>
+                </div>
+                <div id="entries-list" class="entries-list"></div>
+            </section>
+        </aside>
+
+        <main class="main-content">
+            <div class="main-toolbar">
+                <div>
+                    <p class="eyebrow">Blackbird Mission Control</p>
+                    <h1>TAMARACK Knowledge Base</h1>
+                    <p class="hero-text">Reusable shell helpers now live in a review-first library with risk badges, copy actions, and an export block that still leaves your real <code>~/.zshrc</code> alone.</p>
+                </div>
+                <div class="view-tabs" role="tablist" aria-label="Knowledge panels">
+                    <button class="view-tab" data-view="library" role="tab" aria-selected="false" type="button">Knowledge Entries</button>
+                    <button class="view-tab active" data-view="shell" role="tab" aria-selected="true" type="button">Shell Snippets</button>
+                </div>
             </div>
 
-            <h2>Add New Entry</h2>
-            <form id="entry-form">
-                <div class="form-group">
-                    <label for="title">Title</label>
-                    <input type="text" id="title" required>
+            <section id="library-panel" class="panel-view">
+                <div class="section-heading section-heading-spacious">
+                    <div>
+                        <p class="eyebrow">Entries</p>
+                        <h2>Saved Notes</h2>
+                        <p class="section-copy">The original note and code entry workflow still works here. Shell snippets stay separated so they remain reference material until you intentionally export or copy them.</p>
+                    </div>
+                    <button id="test-hud-btn" type="button">Test HUD</button>
+                </div>
+                <div id="selected-entry" class="detail-card empty-state">
+                    <p class="empty-copy">Select an entry from the sidebar to view, edit, or delete it.</p>
+                </div>
+            </section>
+
+            <section id="shell-panel" class="panel-view active">
+                <div class="section-heading section-heading-spacious">
+                    <div>
+                        <p class="eyebrow">Shell Snippets</p>
+                        <h2>Safe Shell Snippets</h2>
+                        <p class="section-copy">Grouped aliases and functions for review, copying, and optional export. This pane is intentionally read-only with respect to your live shell configuration.</p>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="type">Type</label>
-                    <select id="type">
-                        <option value="note">Note</option>
-                        <option value="code">Code</option>
-                    </select>
+                <div class="summary-grid">
+                    <article class="summary-card">
+                        <strong id="snippet-total">0</strong>
+                        <p class="summary-copy">Snippets available for review</p>
+                    </article>
+                    <article class="summary-card">
+                        <strong id="snippet-categories">0</strong>
+                        <p class="summary-copy">Organized categories</p>
+                    </article>
+                    <article class="summary-card">
+                        <strong id="snippet-caution-count">0</strong>
+                        <p class="summary-copy">Caution-marked snippets that need an extra look</p>
+                    </article>
+                    <article class="summary-card">
+                        <strong id="snippet-export-count">0</strong>
+                        <p class="summary-copy">Exportable snippets in the generated zsh block</p>
+                    </article>
                 </div>
 
-                <div class="form-group">
-                    <label for="content">Content</label>
-                    <textarea id="content" required placeholder="Enter your knowledge here..."></textarea>
+                <div class="shell-tools">
+                    <div class="shell-column">
+                        <section class="safety-card">
+                            <div class="section-heading">
+                                <div>
+                                    <p class="eyebrow">Safety</p>
+                                    <h3>Review Before Install</h3>
+                                </div>
+                                <span class="count-pill">local only</span>
+                            </div>
+                            <ul id="safety-rules" class="rule-list"></ul>
+                        </section>
+
+                        <section class="filter-card">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label for="snippet-search">Filter snippets</label>
+                                <input type="text" id="snippet-search" placeholder="Search aliases, functions, tags, notes, risk levels, or platforms">
+                            </div>
+                        </section>
+
+                        <div id="snippet-groups" class="snippet-groups"></div>
+                    </div>
+
+                    <aside class="export-card">
+                        <div class="section-heading">
+                            <div>
+                                <p class="eyebrow">Export</p>
+                                <h3>Generated zsh Block</h3>
+                            </div>
+                            <button id="copy-export-btn" type="button">Copy Block</button>
+                        </div>
+                        <p class="section-copy">Copy this block into <code>~/.zshrc</code> only after review. Dangerous snippets stay reference-only and are omitted from export by policy.</p>
+                        <pre><code id="shell-export-block" class="language-bash"></code></pre>
+                    </aside>
                 </div>
-
-                <div class="form-group">
-                    <label for="tags">Tags (comma separated)</label>
-                    <input type="text" id="tags" placeholder="linux, commands, filesystem">
-                </div>
-
-                <button type="submit">Add Entry</button>
-            </form>
-
-            <div class="entries-list">
-                <h3>Your Entries</h3>
-                <div id="entries-list"></div>
-            </div>
-        </div>
-
-        <div class="main-content">
-            <h1>Knowledge Base Manager</h1>
-            <p>This is your knowledge base management interface. The HUD overlay is accessible globally with <kbd>Ctrl+Shift+0</kbd>.</p>
-        <button id="test-hud-btn" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 20px;">Test HUD</button>
-                <p>Select an entry from the sidebar to view details and edit.</p>
-            </div>
-        </div>
+            </section>
+        </main>
     </div>
 
     <script>
-        const { ipcRenderer } = require('electron');
+        const { ipcRenderer, clipboard } = require('electron');
+
         const entryForm = document.getElementById('entry-form');
         const entriesList = document.getElementById('entries-list');
+        const entryCount = document.getElementById('entry-count');
         const selectedEntryDiv = document.getElementById('selected-entry');
+        const entrySubmitButton = document.getElementById('entry-submit-btn');
+        const cancelEditButton = document.getElementById('cancel-edit-btn');
+        const showHudButton = document.getElementById('show-hud-btn');
+        const showShellButton = document.getElementById('show-shell-btn');
+        const testHudButton = document.getElementById('test-hud-btn');
+        const viewTabs = Array.from(document.querySelectorAll('.view-tab'));
+        const snippetSearchInput = document.getElementById('snippet-search');
+        const safetyRulesList = document.getElementById('safety-rules');
+        const snippetGroups = document.getElementById('snippet-groups');
+        const copyExportButton = document.getElementById('copy-export-btn');
+        const shellExportBlock = document.getElementById('shell-export-block');
+
+        const snippetTotal = document.getElementById('snippet-total');
+        const snippetCategories = document.getElementById('snippet-categories');
+        const snippetCautionCount = document.getElementById('snippet-caution-count');
+        const snippetExportCount = document.getElementById('snippet-export-count');
 
         let allEntries = [];
         let selectedEntryId = null;
+        let editingEntryId = null;
+        let shellSnippetsData = { snippets: [], categoryOrder: [], safetyRules: [], exportPolicy: { omitRiskLevels: [] } };
+        let shellSnippetExport = '';
 
-        // Load entries
-        async function loadEntries() {
+        marked.setOptions({ breaks: true });
+
+        function escapeHtml(value = '') {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatDate(value) {
+            if (!value) {
+                return 'Unknown date';
+            }
+
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) {
+                return value;
+            }
+
+            return date.toLocaleDateString();
+        }
+
+        function setActiveView(view) {
+            viewTabs.forEach((tab) => {
+                const isActive = tab.dataset.view === view;
+                tab.classList.toggle('active', isActive);
+                tab.setAttribute('aria-selected', String(isActive));
+            });
+
+            document.querySelectorAll('.panel-view').forEach((panel) => {
+                panel.classList.toggle('active', panel.id === `${view}-panel`);
+            });
+        }
+
+        function flashButton(button, label) {
+            if (!button) {
+                return;
+            }
+
+            const originalLabel = button.dataset.originalLabel || button.textContent;
+            button.dataset.originalLabel = originalLabel;
+            button.textContent = label;
+
+            window.setTimeout(() => {
+                button.textContent = originalLabel;
+            }, 1400);
+        }
+
+        function copyText(text, button) {
             try {
-                allEntries = await ipcRenderer.invoke('get-library');
-                displayEntriesList();
+                clipboard.writeText(text);
+                flashButton(button, 'Copied');
             } catch (error) {
-                console.error('Error loading entries:', error);
+                console.error('Clipboard error:', error);
+                flashButton(button, 'Copy failed');
             }
         }
 
-        // Display entries in sidebar
+        function renderEmptySelectedEntry(message) {
+            selectedEntryDiv.classList.add('empty-state');
+            selectedEntryDiv.innerHTML = `<p class="empty-copy">${escapeHtml(message)}</p>`;
+        }
+
+        function resetEntryForm() {
+            editingEntryId = null;
+            entrySubmitButton.textContent = 'Add Entry';
+            cancelEditButton.hidden = true;
+            entryForm.reset();
+        }
+
         function displayEntriesList() {
-            entriesList.innerHTML = allEntries.map(entry => `
-                <div class="entry-item ${selectedEntryId === entry.id ? 'selected' : ''}" onclick="selectEntry(${entry.id})">
-                    <div class="entry-title">${entry.title}</div>
-                    <div class="entry-meta">${entry.type} • ${new Date(entry.created).toLocaleDateString()}</div>
+            entryCount.textContent = String(allEntries.length);
+
+            if (allEntries.length === 0) {
+                entriesList.innerHTML = '<div class="detail-card empty-library"><p class="empty-copy">No entries yet. Add notes or code from the sidebar.</p></div>';
+                return;
+            }
+
+            entriesList.innerHTML = allEntries.map((entry) => `
+                <div class="entry-item ${selectedEntryId === entry.id ? 'selected' : ''}" data-entry-id="${entry.id}">
+                    <div class="entry-title">${escapeHtml(entry.title)}</div>
+                    <div class="entry-meta">${escapeHtml(entry.type)} • ${escapeHtml(formatDate(entry.created))}</div>
                 </div>
             `).join('');
         }
 
-        // Select entry
+        function renderSelectedEntry(entry) {
+            if (!entry) {
+                renderEmptySelectedEntry('Select an entry from the sidebar to view, edit, or delete it.');
+                return;
+            }
+
+            selectedEntryDiv.classList.remove('empty-state');
+
+            const renderedContent = entry.type === 'code'
+                ? `<pre><code class="language-bash">${escapeHtml(entry.content)}</code></pre>`
+                : `<div class="markdown-content">${marked.parse(entry.content || '')}</div>`;
+            const tags = entry.tags && entry.tags.length > 0
+                ? entry.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join('')
+                : '<span class="tag">no tags</span>';
+
+            selectedEntryDiv.innerHTML = `
+                <div class="section-heading">
+                    <div>
+                        <h2>${escapeHtml(entry.title)}</h2>
+                        <div class="detail-meta">Type: ${escapeHtml(entry.type)} • Created: ${escapeHtml(formatDate(entry.created))}</div>
+                    </div>
+                    <div class="button-row detail-actions">
+                        <button type="button" data-entry-action="edit" data-entry-id="${entry.id}">Edit</button>
+                        <button type="button" class="btn-secondary" data-entry-action="delete" data-entry-id="${entry.id}">Delete</button>
+                    </div>
+                </div>
+                <div class="detail-content">${renderedContent}</div>
+                <div class="tag-row" style="margin-top: 18px;">${tags}</div>
+            `;
+
+            Prism.highlightAll();
+        }
+
         function selectEntry(id) {
             selectedEntryId = id;
             displayEntriesList();
-            const entry = allEntries.find(e => e.id === id);
-            if (entry) {
-                selectedEntryDiv.innerHTML = `
-                    <h2>${entry.title}</h2>
-                    <div class="entry-meta">Type: ${entry.type} | Created: ${new Date(entry.created).toLocaleDateString()}</div>
-                    <div class="entry-content" style="margin-top: 20px;">
-                        ${entry.type === 'code' ? `<pre><code class="language-text">${entry.content}</code></pre>` : `<div class="markdown-content">${marked.parse(entry.content)}</div>`}
-                    </div>
-                    ${entry.tags && entry.tags.length > 0 ? `<div style="margin-top: 15px;"><strong>Tags:</strong> ${entry.tags.join(', ')}</div>` : ''}
-                    <div style="margin-top: 20px;">
-                        <button onclick="editEntry(${entry.id})">Edit</button>
-                        <button class="btn-secondary" onclick="deleteEntry(${entry.id})">Delete</button>
-                    </div>
-                `;
-                setTimeout(() => Prism.highlightAll(), 0);
+            const entry = allEntries.find((candidate) => candidate.id === id);
+            renderSelectedEntry(entry);
+            setActiveView('library');
+        }
+
+        async function loadEntries() {
+            try {
+                allEntries = await ipcRenderer.invoke('get-library');
+                displayEntriesList();
+
+                if (selectedEntryId && allEntries.some((entry) => entry.id === selectedEntryId)) {
+                    renderSelectedEntry(allEntries.find((entry) => entry.id === selectedEntryId));
+                } else if (allEntries.length > 0) {
+                    renderEmptySelectedEntry('Select an entry from the sidebar to view, edit, or delete it.');
+                } else {
+                    renderEmptySelectedEntry('No entries yet. Add notes or code from the sidebar.');
+                }
+            } catch (error) {
+                console.error('Error loading entries:', error);
+                renderEmptySelectedEntry('Could not load the saved library.');
             }
         }
 
-        // Add new entry
-        entryForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const title = document.getElementById('title').value.trim();
-            const type = document.getElementById('type').value;
-            const content = document.getElementById('content').value.trim();
-            const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t);
+        function matchesSnippetQuery(snippet, query) {
+            const searchBlob = [
+                snippet.title,
+                snippet.category,
+                snippet.description,
+                snippet.code,
+                snippet.riskLevel,
+                snippet.platform,
+                snippet.notes,
+                ...(snippet.tags || [])
+            ]
+                .filter(Boolean)
+                .join(' ')
+                .toLowerCase();
 
-            if (!title || !content) return;
+            return searchBlob.includes(query);
+        }
 
-            try {
-                await ipcRenderer.invoke('add-entry', { title, type, content, tags });
-                entryForm.reset();
-                loadEntries();
-            } catch (error) {
-                console.error('Error adding entry:', error);
+        function renderShellSummary() {
+            const snippets = shellSnippetsData.snippets || [];
+            const exportOmissions = new Set(shellSnippetsData.exportPolicy?.omitRiskLevels || []);
+
+            snippetTotal.textContent = String(snippets.length);
+            snippetCategories.textContent = String(new Set(snippets.map((snippet) => snippet.category)).size);
+            snippetCautionCount.textContent = String(snippets.filter((snippet) => snippet.riskLevel === 'caution').length);
+            snippetExportCount.textContent = String(
+                snippets.filter((snippet) => !exportOmissions.has(snippet.riskLevel)).length
+            );
+        }
+
+        function renderSafetyRules() {
+            if (!shellSnippetsData.safetyRules || shellSnippetsData.safetyRules.length === 0) {
+                safetyRulesList.innerHTML = '<li>No safety rules configured.</li>';
+                return;
             }
-        });
 
-        // Edit entry
+            safetyRulesList.innerHTML = shellSnippetsData.safetyRules
+                .map((rule) => `<li>${escapeHtml(rule)}</li>`)
+                .join('');
+        }
+
+        function groupSnippets(filteredSnippets) {
+            const groups = new Map();
+
+            (shellSnippetsData.categoryOrder || []).forEach((category) => {
+                groups.set(category, []);
+            });
+
+            filteredSnippets.forEach((snippet) => {
+                if (!groups.has(snippet.category)) {
+                    groups.set(snippet.category, []);
+                }
+                groups.get(snippet.category).push(snippet);
+            });
+
+            return Array.from(groups.entries()).filter(([, snippets]) => snippets.length > 0);
+        }
+
+        function renderSnippetGroups() {
+            const query = snippetSearchInput.value.trim().toLowerCase();
+            const snippets = (shellSnippetsData.snippets || []).filter((snippet) => {
+                return query.length === 0 ? true : matchesSnippetQuery(snippet, query);
+            });
+
+            if (snippets.length === 0) {
+                snippetGroups.innerHTML = '<div class="snippet-card snippet-empty"><p class="empty-copy">No shell snippets match the current filter.</p></div>';
+                return;
+            }
+
+            const groups = groupSnippets(snippets);
+
+            snippetGroups.innerHTML = groups.map(([category, groupSnippetsForCategory]) => `
+                <section class="snippet-group">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">${escapeHtml(category)}</p>
+                            <h3>${escapeHtml(category)}</h3>
+                        </div>
+                        <span class="count-pill">${groupSnippetsForCategory.length}</span>
+                    </div>
+                    <div class="snippet-group-grid">
+                        ${groupSnippetsForCategory.map((snippet) => `
+                            <article class="snippet-card">
+                                <div class="snippet-card-header">
+                                    <div>
+                                        <h4>${escapeHtml(snippet.title)}</h4>
+                                        <p class="snippet-description">${escapeHtml(snippet.description)}</p>
+                                    </div>
+                                    <button type="button" class="btn-secondary" data-copy-snippet="${escapeHtml(snippet.id)}">Copy</button>
+                                </div>
+                                <div class="snippet-badges">
+                                    <span class="badge badge-risk-${escapeHtml(snippet.riskLevel)}">${escapeHtml(snippet.riskLevel)}</span>
+                                    <span class="badge">${escapeHtml(snippet.platform)}</span>
+                                </div>
+                                <pre><code class="language-bash">${escapeHtml(snippet.code)}</code></pre>
+                                <div class="snippet-footer">
+                                    <p class="snippet-notes">${escapeHtml(snippet.notes || 'No additional notes.')}</p>
+                                    <div class="tag-row">
+                                        ${(snippet.tags || []).map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+                                    </div>
+                                    <div class="snippet-updated">Updated ${escapeHtml(formatDate(snippet.updatedAt || snippet.createdAt))}</div>
+                                </div>
+                            </article>
+                        `).join('')}
+                    </div>
+                </section>
+            `).join('');
+
+            Prism.highlightAll();
+        }
+
+        async function loadShellSnippets() {
+            try {
+                const [data, exportBlock] = await Promise.all([
+                    ipcRenderer.invoke('get-shell-snippets'),
+                    ipcRenderer.invoke('get-shell-snippet-export')
+                ]);
+
+                shellSnippetsData = data;
+                shellSnippetExport = exportBlock;
+                shellExportBlock.textContent = shellSnippetExport;
+
+                renderShellSummary();
+                renderSafetyRules();
+                renderSnippetGroups();
+                Prism.highlightAll();
+            } catch (error) {
+                console.error('Error loading shell snippets:', error);
+                shellExportBlock.textContent = '# Shell snippet export is unavailable.';
+                snippetGroups.innerHTML = '<div class="snippet-card snippet-empty"><p class="empty-copy">Shell snippets could not be loaded.</p></div>';
+            }
+        }
+
         async function editEntry(id) {
-            const entry = allEntries.find(e => e.id === id);
-            if (!entry) return;
+            const entry = allEntries.find((candidate) => candidate.id === id);
+            if (!entry) {
+                return;
+            }
 
+            editingEntryId = id;
             document.getElementById('title').value = entry.title;
             document.getElementById('type').value = entry.type;
             document.getElementById('content').value = entry.content;
             document.getElementById('tags').value = entry.tags ? entry.tags.join(', ') : '';
-
-            // Change form to update mode
-            const submitBtn = entryForm.querySelector('button[type="submit"]');
-            submitBtn.textContent = 'Update Entry';
-            submitBtn.onclick = async (e) => {
-                e.preventDefault();
-                const updates = {
-                    title: document.getElementById('title').value.trim(),
-                    type: document.getElementById('type').value,
-                    content: document.getElementById('content').value.trim(),
-                    tags: document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t)
-                };
-
-                try {
-                    await ipcRenderer.invoke('update-entry', id, updates);
-                    entryForm.reset();
-                    submitBtn.textContent = 'Add Entry';
-                    submitBtn.onclick = null;
-                    loadEntries();
-                    selectEntry(id);
-                } catch (error) {
-                    console.error('Error updating entry:', error);
-                }
-            };
+            entrySubmitButton.textContent = 'Update Entry';
+            cancelEditButton.hidden = false;
         }
 
-        // Delete entry
         async function deleteEntry(id) {
-            if (!confirm('Are you sure you want to delete this entry?')) return;
+            if (!window.confirm('Are you sure you want to delete this entry?')) {
+                return;
+            }
 
             try {
                 await ipcRenderer.invoke('delete-entry', id);
-                loadEntries();
-                selectedEntryDiv.innerHTML = '<p>Select an entry from the sidebar to view details.</p>';
+                if (selectedEntryId === id) {
+                    selectedEntryId = null;
+                }
+                resetEntryForm();
+                await loadEntries();
             } catch (error) {
                 console.error('Error deleting entry:', error);
             }
         }
 
-        // Load entries on startup
-        loadEntries();
-
-        // Test HUD button
-        document.getElementById('test-hud-btn').addEventListener('click', () => {
+        showHudButton.addEventListener('click', () => {
             ipcRenderer.send('show-hud');
         });
+
+        showShellButton.addEventListener('click', () => {
+            setActiveView('shell');
+        });
+
+        testHudButton.addEventListener('click', () => {
+            ipcRenderer.send('show-hud');
+        });
+
+        viewTabs.forEach((tab) => {
+            tab.addEventListener('click', () => {
+                setActiveView(tab.dataset.view);
+            });
+        });
+
+        cancelEditButton.addEventListener('click', () => {
+            resetEntryForm();
+        });
+
+        entryForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const payload = {
+                title: document.getElementById('title').value.trim(),
+                type: document.getElementById('type').value,
+                content: document.getElementById('content').value.trim(),
+                tags: document.getElementById('tags').value.split(',').map((tag) => tag.trim()).filter(Boolean)
+            };
+
+            if (!payload.title || !payload.content) {
+                return;
+            }
+
+            try {
+                if (editingEntryId) {
+                    await ipcRenderer.invoke('update-entry', editingEntryId, payload);
+                    selectedEntryId = editingEntryId;
+                } else {
+                    const newEntry = await ipcRenderer.invoke('add-entry', payload);
+                    selectedEntryId = newEntry.id;
+                }
+
+                resetEntryForm();
+                await loadEntries();
+                if (selectedEntryId) {
+                    selectEntry(selectedEntryId);
+                }
+            } catch (error) {
+                console.error('Error saving entry:', error);
+            }
+        });
+
+        entriesList.addEventListener('click', (event) => {
+            const entryButton = event.target.closest('[data-entry-id]');
+            if (!entryButton) {
+                return;
+            }
+
+            selectEntry(Number(entryButton.dataset.entryId));
+        });
+
+        selectedEntryDiv.addEventListener('click', (event) => {
+            const actionButton = event.target.closest('[data-entry-action]');
+            if (!actionButton) {
+                return;
+            }
+
+            const id = Number(actionButton.dataset.entryId);
+            if (actionButton.dataset.entryAction === 'edit') {
+                editEntry(id);
+            }
+
+            if (actionButton.dataset.entryAction === 'delete') {
+                deleteEntry(id);
+            }
+        });
+
+        snippetSearchInput.addEventListener('input', () => {
+            renderSnippetGroups();
+        });
+
+        snippetGroups.addEventListener('click', (event) => {
+            const copyButton = event.target.closest('[data-copy-snippet]');
+            if (!copyButton) {
+                return;
+            }
+
+            const snippet = (shellSnippetsData.snippets || []).find((candidate) => candidate.id === copyButton.dataset.copySnippet);
+            if (!snippet) {
+                return;
+            }
+
+            copyText(snippet.code, copyButton);
+        });
+
+        copyExportButton.addEventListener('click', () => {
+            copyText(shellSnippetExport, copyExportButton);
+        });
+
+        setActiveView('shell');
+        loadEntries();
+        loadShellSnippets();
     </script>
 </body>
 </html>
