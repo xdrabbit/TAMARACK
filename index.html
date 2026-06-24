@@ -848,20 +848,21 @@
         }
 
         function selectEntry(id) {
-            selectedEntryId = id;
+            selectedEntryId = id == null ? null : String(id);
             displayEntriesList();
-            const entry = allEntries.find((candidate) => candidate.id === id);
+            const entry = allEntries.find((candidate) => String(candidate.id) === String(id));
             renderSelectedEntry(entry);
             setActiveView('library');
         }
 
         async function loadEntries() {
             try {
-                allEntries = await ipcRenderer.invoke('get-library');
+                const raw = await ipcRenderer.invoke('get-library');
+                allEntries = (raw || []).map((e) => ({ ...e, id: String(e.id) }));
                 displayEntriesList();
 
-                if (selectedEntryId && allEntries.some((entry) => entry.id === selectedEntryId)) {
-                    renderSelectedEntry(allEntries.find((entry) => entry.id === selectedEntryId));
+                if (selectedEntryId && allEntries.some((entry) => String(entry.id) === String(selectedEntryId))) {
+                    renderSelectedEntry(allEntries.find((entry) => String(entry.id) === String(selectedEntryId)));
                 } else if (allEntries.length > 0) {
                     renderEmptySelectedEntry('Select an entry from the sidebar to view, edit, or delete it.');
                 } else {
@@ -1007,12 +1008,13 @@
         }
 
         async function editEntry(id) {
-            const entry = allEntries.find((candidate) => candidate.id === id);
+            const sid = String(id);
+            const entry = allEntries.find((candidate) => String(candidate.id) === sid);
             if (!entry) {
                 return;
             }
 
-            editingEntryId = id;
+            editingEntryId = sid;
             document.getElementById('title').value = entry.title;
             document.getElementById('type').value = entry.type;
             document.getElementById('content').value = entry.content;
@@ -1028,7 +1030,7 @@
 
             try {
                 await ipcRenderer.invoke('delete-entry', id);
-                if (selectedEntryId === id) {
+                if (String(selectedEntryId) === String(id)) {
                     selectedEntryId = null;
                 }
                 resetEntryForm();
@@ -1080,7 +1082,7 @@
                     selectedEntryId = editingEntryId;
                 } else {
                     const newEntry = await ipcRenderer.invoke('add-entry', payload);
-                    selectedEntryId = newEntry.id;
+                    selectedEntryId = newEntry ? String(newEntry.id) : null;
                 }
 
                 resetEntryForm();
@@ -1099,7 +1101,7 @@
                 return;
             }
 
-            selectEntry(Number(entryButton.dataset.entryId));
+            selectEntry(entryButton.dataset.entryId); // id may be string (remote UUID) or number (legacy)
         });
 
         selectedEntryDiv.addEventListener('click', (event) => {
@@ -1108,7 +1110,7 @@
                 return;
             }
 
-            const id = Number(actionButton.dataset.entryId);
+            const id = actionButton.dataset.entryId;
             if (actionButton.dataset.entryAction === 'edit') {
                 editEntry(id);
             }

@@ -54,3 +54,9 @@ library.json
 # Temporary files
 *.tmp
 *.temp
+
+# Legacy parallel copy of the app (older version, not needed)
+knowledge-hud/
+
+# Unrelated scripts leftover from other projects
+scripts/

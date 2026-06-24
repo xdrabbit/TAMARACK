@@ -2,6 +2,8 @@
 
 TAMARACK is a local Electron knowledge base for operational notes, code snippets, and review-first shell helpers.
 
+It can also run as a **LAN-wide shared active HUD**: one machine (e.g. "blackbird") runs the central server. Every machine on your LAN (laptops, Ada the Mac Mini, etc.) can press a local hotkey to open the HUD and search or save knowledge against the shared store. Shell snippets stay local and repo-backed.
+
 The app now includes a **Safe Shell Snippets** system for storing aliases, zsh functions, Git shortcuts, SSH shortcuts, npm helpers, and config-editing references without pushing anything directly into your live `~/.zshrc`.
 
 ## What the App Does
@@ -158,7 +160,8 @@ You can also open a fresh terminal instead of sourcing immediately.
 
 ## File Guide
 
-- [main.js](/home/tom/blackbird_dev/TAMARACK/main.js): Electron main process, windows, shortcuts, IPC handlers.
+- [main.js](/home/tom/blackbird_dev/TAMARACK/main.js): Electron main process, windows, shortcuts, IPC handlers, remote proxy when `TAMARACK_SERVER` is set.
+- [server.js](/home/tom/blackbird_dev/TAMARACK/server.js): Lightweight central backend (run on blackbird or other always-on host).
 - [index.html](/home/tom/blackbird_dev/TAMARACK/index.html): Manager UI, shell snippet panel, copy/export actions.
 - [hud.html](/home/tom/blackbird_dev/TAMARACK/hud.html): HUD overlay search UI.
 - [shell-snippets.js](/home/tom/blackbird_dev/TAMARACK/shell-snippets.js): Shell snippet loader, export builder, HUD entry adapter.
@@ -168,11 +171,100 @@ You can also open a fresh terminal instead of sourcing immediately.
 ## Development Notes
 
 - The root app is the live Electron app for this repo.
+- To use across machines: run `npm run serve` on the central host (blackbird), then point clients with the `TAMARACK_SERVER` env var.
 - `knowledge-hud/` exists as a separate untracked parallel copy and is not required for the root app to run.
 - `scripts/generate-release-manifest.js` is unrelated to shell snippet installation and was left alone.
+
+## LAN / Multi-Machine Shared HUD (blackbird server + clients)
+
+TAMARACK now supports using the HUD on any machine on your local network with a single shared knowledge base.
+
+### Quick setup
+
+1. On the **server host** (the machine that will hold the data, referred to as "blackbird" in examples):
+
+   ```bash
+   npm install
+   npm run serve
+   ```
+
+   The server listens on port 4777 by default. It stores data in `~/.config/tamarack-server/library.json`.
+
+2. On **any client** (including the Mac Mini "Ada" or other laptops):
+
+   ```bash
+   npm install
+   TAMARACK_SERVER=http://blackbird.local:4777 npm start
+   ```
+
+   - Use the machine's LAN name or IP.
+   - `blackbird.local` usually works on macOS/Linux LANs via mDNS.
+
+3. On the server host itself you can also run a client:
+
+   ```bash
+   TAMARACK_SERVER=http://127.0.0.1:4777 npm start
+   ```
+
+### How it works
+- Each machine registers its own hotkeys (F12 is the most reliable).
+- The HUD and manager windows talk to the central server for your notes/code.
+- Shell snippets remain local (fast, versioned with the app).
+- Adding/editing/deleting on any client is immediately visible everywhere.
+
+### Making the server always available
+- Run it in a `tmux` / `screen` session on blackbird, or
+- Use launchd (macOS), systemd (Linux), or a simple startup script.
+- Open port 4777 (or your chosen `PORT=...`) in the host firewall if needed.
+
+### Troubleshooting: "Port already in use" or EADDRINUSE
+If you see an error like "Port 4777 is already in use" (errno -98 / EADDRINUSE), another process is using that TCP port.
+
+**Immediate fixes:**
+
+```bash
+# 1. Use a different port (recommended quick fix)
+PORT=4778 npm run serve
+
+# Then on clients use the matching URL:
+TAMARACK_SERVER=http://blackbird.local:4778 npm start
+```
+
+**Find what's using the port:**
+
+```bash
+# macOS / Linux
+lsof -i :4777
+
+# Alternative
+ss -tuln | grep 4777
+# or
+netstat -tuln | grep 4777
+```
+
+**Clean up a stale server (only if you're sure it's safe):**
+
+```bash
+pkill -f "node server.js"
+
+# or more targeted
+kill $(lsof -t -i:4777)
+```
+
+The server will automatically try the next 9 ports if the requested one is busy and tell you which one it chose.
+
+### Config file alternative
+Instead of the env var you can create `~/.config/tamarack/remote.json`:
+
+```json
+{ "server": "http://blackbird.local:4777" }
+```
+
+### Local-only (original behavior)
+If `TAMARACK_SERVER` is not set, the app works exactly like before — fully local per machine.
 
 ## Requirements
 
 - Node.js 14+
 - Electron dependencies from `npm install`
-- A Linux desktop session for the HUD window and shortcut behavior
+- A Linux desktop session for the HUD window and shortcut behavior (clients)
