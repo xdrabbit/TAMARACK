@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu } = require('electron');
+const { app, BrowserWindow, globalShortcut, ipcMain, Tray, Menu, screen } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
 const {
@@ -214,13 +214,18 @@ function createMainWindow() {
 }
 
 function createHUDWindow() {
+    // Bionic-eye overlay: compact, borderless, always-on-top, low opacity
     hudWindow = new BrowserWindow({
-        width: 1000,
-        height: 600,
-        show: false, // Hide by default, show on hotkey
+        width: 680,
+        height: 400,
+        show: false,
         frame: false,
-        alwaysOnTop: true,
         transparent: true,
+        backgroundColor: '#00000000',
+        alwaysOnTop: true,
+        skipTaskbar: true,
+        hasShadow: false,
+        resizable: false,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
@@ -229,15 +234,44 @@ function createHUDWindow() {
 
     hudWindow.loadFile('hud.html');
 
-    // Center the HUD
-    hudWindow.center();
-
-    // Hide on blur (click outside)
-    hudWindow.on('blur', () => {
+    // Position as a floating HUD near top-center (bionic eye placement)
+    hudWindow.once('ready-to-show', () => {
+        positionBionicHUD();
+        // Low opacity for see-through bionic overlay feel
         if (hudWindow && !hudWindow.isDestroyed()) {
+            hudWindow.setOpacity(0.88);
+            hudWindow.setAlwaysOnTop(true, 'floating');
+        }
+    });
+
+    // Re-position on display changes
+    screen.on('display-metrics-changed', () => {
+        if (hudWindow && !hudWindow.isDestroyed() && !hudWindow.isVisible()) {
+            positionBionicHUD();
+        }
+    });
+
+    // Hide on blur (click outside) — classic HUD behavior
+    hudWindow.on('blur', () => {
+        if (hudWindow && !hudWindow.isDestroyed() && hudWindow.isVisible()) {
             hudWindow.hide();
         }
     });
+}
+
+function positionBionicHUD() {
+    if (!hudWindow || hudWindow.isDestroyed()) return;
+    try {
+        const primaryDisplay = screen.getPrimaryDisplay();
+        const { x: dx, y: dy, width: dw, height: dh } = primaryDisplay.workArea;
+        const w = 680;
+        const h = 400;
+        const targetX = Math.floor(dx + (dw - w) / 2);
+        const targetY = Math.floor(dy + Math.max(24, dh * 0.06)); // ~6% down from top of work area
+        hudWindow.setBounds({ x: targetX, y: targetY, width: w, height: h });
+    } catch (e) {
+        hudWindow.center();
+    }
 }
 
 function createTray() {
@@ -255,14 +289,23 @@ function createTray() {
 }
 
 function toggleHUD() {
+    if (!hudWindow || hudWindow.isDestroyed()) return;
+
     console.log('Toggle HUD called. Current visibility:', hudWindow.isVisible());
     if (hudWindow.isVisible()) {
         hudWindow.hide();
         console.log('HUD hidden');
     } else {
+        // Ensure correct bionic positioning + low opacity
+        positionBionicHUD();
+        hudWindow.setOpacity(0.88);
+        hudWindow.setAlwaysOnTop(true, 'floating');
         hudWindow.show();
         hudWindow.focus();
-        console.log('HUD shown and focused');
+
+        // Tell renderer to focus the search (bionic-eye quick-use flow)
+        hudWindow.webContents.send('hud-focus-search');
+        console.log('HUD shown (bionic overlay)');
     }
 }
 
@@ -276,14 +319,16 @@ app.whenReady().then(async () => {
     createMainWindow();
     createHUDWindow();
 
-    // Try multiple global shortcuts for Linux compatibility
+    // Global hotkey toggle for bionic-eye HUD overlay.
+    // Tries several combos for broad Linux / compositor compatibility.
+    // Primary recommendations: F12 (devs), Ctrl+Shift+0, Ctrl+Alt+H
     const shortcuts = [
         'CommandOrControl+Shift+0',
+        'CommandOrControl+Alt+H',
         'CommandOrControl+Shift+9',
-        'CommandOrControl+Alt+0',
-        'CommandOrControl+Alt+9',
         'F12',
-        'F11'
+        'F11',
+        'CommandOrControl+Alt+0'
     ];
 
     let globalShortcutRegistered = false;

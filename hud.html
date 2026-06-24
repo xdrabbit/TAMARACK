@@ -10,105 +10,246 @@
     <style>
         :root {
             color-scheme: dark;
-            --bg: rgba(0, 0, 0, 0.92);
-            --panel: rgba(6, 12, 20, 0.86);
-            --border: rgba(0, 255, 170, 0.25);
-            --text: #defff4;
-            --muted: rgba(194, 255, 235, 0.7);
-            --accent: #55f2c0;
+            --bg: rgba(0, 0, 0, 0.62);
+            --panel: rgba(3, 9, 15, 0.72);
+            --panel-strong: rgba(2, 7, 12, 0.82);
+            --border: rgba(0, 245, 200, 0.35);
+            --border-glow: rgba(0, 245, 200, 0.18);
+            --text: #d4fff6;
+            --muted: rgba(160, 235, 215, 0.68);
+            --accent: #00f0cc;
+            --accent-2: #00c9a7;
             --warning: #ffbf69;
             --danger: #ff7f7f;
+            --scan: rgba(0, 245, 200, 0.06);
         }
 
         * {
             box-sizing: border-box;
         }
 
-        body {
+        html, body {
             margin: 0;
-            padding: 20px;
-            font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-            background: var(--bg);
-            color: var(--text);
-            border-radius: 18px;
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--border);
-            box-shadow: 0 22px 60px rgba(0, 0, 0, 0.45);
+            height: 100%;
+            overflow: hidden;
         }
 
-        .close-hint {
+        body {
+            font-family: "SF Mono", "Monaco", "Menlo", "Ubuntu Mono", monospace;
+            background: var(--bg);
+            color: var(--text);
+            border-radius: 22px;
+            /* Heavy glassmorphism + low opacity for true bionic overlay */
+            backdrop-filter: blur(22px) saturate(140%);
+            -webkit-backdrop-filter: blur(22px) saturate(140%);
+            border: 1px solid var(--border);
+            box-shadow:
+                0 0 0 1px rgba(0, 245, 200, 0.06) inset,
+                0 18px 70px rgba(0, 0, 0, 0.65),
+                0 0 38px rgba(0, 245, 200, 0.06);
+            /* Drag region for the entire floating bionic lens (except interactive children) */
+            -webkit-app-region: drag;
+        }
+
+        /* Bionic eye lens ring + subtle scan / HUD aesthetic */
+        body::before {
+            content: "";
             position: absolute;
-            top: 10px;
-            right: 16px;
-            font-size: 12px;
-            color: rgba(194, 255, 235, 0.6);
+            inset: 0;
+            border-radius: 22px;
+            pointer-events: none;
+            background:
+                /* faint concentric rings (iris) */
+                radial-gradient(circle at 50% 38%, rgba(0,245,200,0.07) 0%, transparent 42%),
+                radial-gradient(circle at 50% 38%, rgba(0,245,200,0.035) 43%, transparent 62%);
+            border: 1px solid var(--border-glow);
+            box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.55);
+        }
+
+        /* Very subtle horizontal scanlines for classic HUD / bionic feed */
+        body::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 22px;
+            pointer-events: none;
+            background-image: repeating-linear-gradient(
+                transparent 0px,
+                transparent 2px,
+                var(--scan) 2px,
+                var(--scan) 3px
+            );
+            background-size: 100% 3px;
+            opacity: 0.35;
+            mix-blend-mode: screen;
+        }
+
+        .bionic-header {
+            -webkit-app-region: drag;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px 6px 18px;
+            user-select: none;
+            z-index: 2;
+        }
+
+        .bionic-eye {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            color: var(--accent);
+            opacity: 0.9;
+        }
+
+        .bionic-eye .eye {
+            display: inline-block;
+            width: 13px;
+            height: 13px;
+            border: 1.5px solid var(--accent);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 0 6px var(--accent);
+        }
+
+        .bionic-eye .eye::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 4px var(--accent);
+        }
+
+        .bionic-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(212, 255, 246, 0.55);
+            letter-spacing: 2.5px;
+        }
+
+        .bionic-hint {
+            font-size: 10px;
+            color: rgba(160, 235, 215, 0.45);
+            -webkit-app-region: no-drag;
         }
 
         .hud-container {
-            max-width: 920px;
+            position: relative;
+            z-index: 1;
+            max-width: 640px;
             margin: 0 auto;
+            padding: 0 18px 16px;
+            -webkit-app-region: no-drag; /* allow interaction inside */
         }
 
         .search-container {
-            margin-bottom: 18px;
+            margin-bottom: 10px;
+            position: relative;
         }
 
         #search-input {
             width: 100%;
-            padding: 14px 16px;
-            border-radius: 12px;
-            background: rgba(3, 8, 14, 0.95);
+            padding: 11px 14px 11px 40px;
+            border-radius: 999px;
+            background: rgba(1, 5, 9, 0.88);
             color: var(--text);
-            border: 1px solid rgba(0, 255, 170, 0.28);
-            font-size: 16px;
+            border: 1px solid rgba(0, 245, 200, 0.22);
+            font-size: 14px;
             font-family: inherit;
             outline: none;
+            transition: border-color 0.1s ease, box-shadow 0.1s ease;
+            -webkit-app-region: no-drag;
         }
 
         #search-input::placeholder {
-            color: rgba(194, 255, 235, 0.54);
+            color: rgba(160, 235, 215, 0.42);
         }
 
         #search-input:focus {
-            box-shadow: 0 0 0 4px rgba(85, 242, 192, 0.12);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 245, 200, 0.13);
+            background: rgba(1, 5, 9, 0.94);
+        }
+
+        /* Bionic reticle / lens icon in search */
+        .search-container::before {
+            content: "◉";
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            font-size: 15px;
+            opacity: 0.7;
+            pointer-events: none;
+            z-index: 1;
         }
 
         .results-container {
-            max-height: 420px;
+            max-height: 282px;
             overflow-y: auto;
             display: grid;
-            gap: 12px;
+            gap: 7px;
+            padding-right: 2px;
+        }
+
+        .results-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .results-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 245, 200, 0.25);
+            border-radius: 2px;
         }
 
         .entry {
             background: var(--panel);
-            border-radius: 14px;
-            padding: 16px;
-            border: 1px solid rgba(0, 255, 170, 0.16);
+            border-radius: 10px;
+            padding: 10px 13px;
+            border: 1px solid rgba(0, 245, 200, 0.10);
+            /* subtle left iris accent */
+            border-left: 2.5px solid var(--accent-2);
+            position: relative;
+            transition: background 0.08s ease, border-color 0.08s ease;
+        }
+
+        .entry:hover {
+            background: var(--panel-strong);
+            border-color: rgba(0, 245, 200, 0.22);
         }
 
         .entry-header {
             display: flex;
             justify-content: space-between;
-            gap: 14px;
+            gap: 10px;
             align-items: flex-start;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
 
         .entry-title {
-            font-weight: bold;
-            font-size: 15px;
-            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            line-height: 1.25;
+            color: #e6fff8;
         }
 
         .entry-meta {
-            font-size: 12px;
+            font-size: 10px;
             color: var(--muted);
+            white-space: nowrap;
         }
 
         .entry-content {
-            line-height: 1.6;
-            color: var(--text);
+            line-height: 1.45;
+            color: #c8f5e8;
+            font-size: 12.5px;
         }
 
         .entry-content code {
@@ -116,59 +257,75 @@
         }
 
         .entry-content pre {
-            background: rgba(2, 8, 12, 0.98);
-            border-radius: 12px;
-            border: 1px solid rgba(0, 255, 170, 0.14);
-            padding: 14px;
+            background: rgba(0, 3, 7, 0.9);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 245, 200, 0.12);
+            padding: 8px 10px;
             overflow-x: auto;
+            font-size: 11.5px;
+            margin: 6px 0 2px;
         }
 
         .entry-tags,
         .entry-badges {
-            margin-top: 12px;
+            margin-top: 7px;
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 4px;
         }
 
         .badge {
             display: inline-flex;
             align-items: center;
             border-radius: 999px;
-            padding: 5px 9px;
-            font-size: 11px;
-            border: 1px solid rgba(0, 255, 170, 0.2);
-            color: var(--text);
-            background: rgba(8, 18, 24, 0.92);
+            padding: 1px 7px;
+            font-size: 9.5px;
+            line-height: 1.6;
+            border: 1px solid rgba(0, 245, 200, 0.18);
+            color: #a8e8d8;
+            background: rgba(2, 9, 14, 0.85);
         }
 
         .risk-safe {
             color: var(--accent);
+            border-color: rgba(0, 245, 200, 0.3);
         }
 
         .risk-caution {
             color: var(--warning);
+            border-color: rgba(255, 191, 105, 0.35);
         }
 
         .risk-dangerous {
             color: var(--danger);
+            border-color: rgba(255, 127, 127, 0.35);
         }
 
         .no-results {
             text-align: center;
-            padding: 40px;
-            color: rgba(194, 255, 235, 0.65);
+            padding: 22px 10px;
+            color: rgba(160, 235, 215, 0.55);
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
-    <div class="close-hint">Click outside or press Esc to close</div>
+    <!-- Bionic eye floating overlay header (also provides drag region) -->
+    <div class="bionic-header">
+        <div class="bionic-eye">
+            <span class="eye" aria-hidden="true"></span>
+            <span>BIONIC</span>
+            <span class="bionic-title">TAMARACK</span>
+        </div>
+        <div class="bionic-hint">F12 • Ctrl+Shift+0 • Esc</div>
+    </div>
+
     <div class="hud-container">
         <div class="search-container">
-            <input type="text" id="search-input" placeholder="Search notes and shell snippets..." autocomplete="off">
+            <input type="text" id="search-input" placeholder="Search knowledge, aliases, shell refs..." autocomplete="off" spellcheck="false">
         </div>
         <div class="results-container" id="results-container">
-            <div class="no-results">Start typing to search notes, aliases, and terminal references.</div>
+            <div class="no-results">Start typing to scan the knowledge feed.</div>
         </div>
     </div>
 
@@ -280,9 +437,35 @@
             Prism.highlightAll();
         }
 
+        // Focus search instantly when main process toggles the bionic overlay visible
+        ipcRenderer.on('hud-focus-search', () => {
+            // Small timeout helps on some Linux compositors after show/focus
+            setTimeout(() => {
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            }, 40);
+        });
+
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
                 ipcRenderer.send('hide-hud');
+            }
+            // Quick clear with Ctrl/Cmd + K while focused
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+                event.preventDefault();
+                searchInput.value = '';
+                displayResults(allEntries.slice(0, 12));
+                searchInput.focus();
+            }
+        });
+
+        // Allow clicking the eye header area to also focus search (no-drag child handling)
+        document.querySelector('.bionic-header')?.addEventListener('click', (e) => {
+            // Only if not clicking the hint
+            if (!e.target.closest('.bionic-hint')) {
+                searchInput.focus();
             }
         });
 
